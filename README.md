@@ -20,7 +20,7 @@
 
 ### 1. 注册账号
 如果你还没有 Magic Newton 账号，可以通过以下链接注册：
-https://magicnewton.com/portal?referral=trtwhooklqs0jr7g
+[https://magicnewton.com](https://magicnewton.com/portal?referral=xu8rdw5jrp74xzmc)
 
 ### 2. 安装步骤
 
@@ -83,16 +83,16 @@ node index.js
 
 ➖ 使用 Screen:
 ```bash
-screen -S magicnewton
+screen -S magic_newton_bot
 node index.js
 # 按 CTRL + A + D 分离会话
-# 使用 screen -r magicnewton 重新连接
+# 使用 screen -r magic_newton_bot 重新连接
 ```
 
 ➖ 使用 PM2:
 ```bash
 npm install -g pm2
-pm2 start index.js --name magicnewton
+pm2 start index.js --name magic_newton_bot
 ```
 
 ## 注意事项
