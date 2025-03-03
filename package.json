@@ -1,0 +1,28 @@
+{
+  "name": "magic_newton_bot",
+  "version": "1.0.0",
+  "description": "Magic Newton 每日抽奖机器人",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "magic-newton",
+    "bot",
+    "automation"
+  ],
+  "author": "0xbaiwan",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xbaiwan/magic_newton_bot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/0xbaiwan/magic_newton_bot/issues"
+  },
+  "homepage": "https://github.com/0xbaiwan/magic_newton_bot#readme",
+  "dependencies": {
+    "colors": "^1.4.0",
+    "puppeteer": "^21.5.0"
+  }
+}
