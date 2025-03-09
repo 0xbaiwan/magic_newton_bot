@@ -104,16 +104,16 @@ function delay(ms) {
  * @returns {string} 格式化的时间字符串
  */
 function getCurrentTime() {
-  return new Date().toLocaleString("id-ID", { hour12: false });
+  return new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta", hour12: false });
 }
 
 /**
  * 执行单个账号的抽奖流程
  * @param {Object} cookie - 账号的cookie信息
+ * @param {number} accountIndex - 账号索引
  */
-async function runAccount(cookie) {
+async function runAccount(cookie, accountIndex) {
   try {
-    // 初始化浏览器
     const browser = await puppeteer.launch({
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
@@ -124,11 +124,11 @@ async function runAccount(cookie) {
 
     // 获取用户信息
     const userAddress = await page.$eval("p.gGRRlH.WrOCw.AEdnq.hGQgmY.jdmPpC", el => el.innerText).catch(() => "未知");
-    console.log(`${getCurrentTime()} - 🏠 你的账号: ${userAddress}`);
+    console.log(`🔹 [账号 ${accountIndex}] ${getCurrentTime()} - 🏠 你的账号: ${userAddress}`);
 
     // 获取积分余额
     let userCredits = await page.$eval("#creditBalance", el => el.innerText).catch(() => "未知");
-    console.log(`${getCurrentTime()} - 💰 总积分: ${userCredits}`);
+    console.log(`🔹 [账号 ${accountIndex}] ${getCurrentTime()} - 💰 总积分: ${userCredits}`);
 
     // 开始抽奖流程
     await page.waitForSelector("button", { timeout: 30000 });
@@ -144,9 +144,9 @@ async function runAccount(cookie) {
     });
 
     if (rollNowClicked) {
-      console.log(`${getCurrentTime()} - ✅ 开始每日抽奖...`);
+      console.log(`🔹 [账号 ${accountIndex}] ${getCurrentTime()} - ✅ 开始每日抽奖...`);
     }
-    await delay(5000);
+    await delay(7000);
 
     const letsRollClicked = await page.$$eval("button", buttons => {
       const target = buttons.find(btn => btn.innerText && btn.innerText.includes("Let's roll"));
@@ -158,7 +158,9 @@ async function runAccount(cookie) {
     });
 
     if (letsRollClicked) {
-      await delay(5000);
+      console.log(`🔹 [账号 ${accountIndex}] ${getCurrentTime()} - 🎲 正在掷骰子...`);
+      await delay(7000);
+
       const throwDiceClicked = await page.$$eval("button", buttons => {
         const target = buttons.find(btn => btn.innerText && btn.innerText.includes("Throw Dice"));
         if (target) {
@@ -169,11 +171,11 @@ async function runAccount(cookie) {
       });
 
       if (throwDiceClicked) {
-        console.log(`${getCurrentTime()} - ⏳ 等待30秒骰子动画...`);
-        await delay(30000);
+        console.log(`🔹 [账号 ${accountIndex}] ${getCurrentTime()} - ⏳ 等待20秒骰子动画...`);
+        await delay(20000);
 
         for (let i = 1; i <= 5; i++) {
-          const pressClicked = await page.$$eval("button > div > p", buttons => {
+          const pressClicked = await page.$$eval("p.gGRRlH.WrOCw.AEdnq.gTXAMX.gsjAMe", buttons => {
             const target = buttons.find(btn => btn.innerText && btn.innerText.includes("Press"));
             if (target) {
               target.click();
@@ -183,49 +185,54 @@ async function runAccount(cookie) {
           });
 
           if (pressClicked) {
-            console.log(`${getCurrentTime()} - 🖱️ 点击按钮 (${i}/5)`);
-            await delay(3000);
+            console.log(`🔹 [账号 ${accountIndex}] ${getCurrentTime()} - 🖱️ 点击按钮 (${i}/5)`);
+            await delay(10000);
+            console.log(`🔹 [账号 ${accountIndex}] ${getCurrentTime()} - ⏳ 等待点击结果...`);
+            await delay(10000);
             
-            const currentPoints = await page.$eval("h2.jsx-f1b6ce0373f41d79.gRUWXt.dnQMzm.ljNVlj.kzjCbV.dqpYKm.RVUSp.fzpbtJ.bYPzoC", el => el.innerText).catch(() => "未知");
-            console.log(`${getCurrentTime()} - �� 当前点击后的积分 (${i}/5): ${currentPoints}`);
+            try {
+              await page.waitForSelector("h2.gRUWXt.dnQMzm.ljNVlj.kzjCbV.dqpYKm.RVUSp.fzpbtJ.bYPzoC", { timeout: 10000 });
+              const currentPoints = await page.$eval("h2.gRUWXt.dnQMzm.ljNVlj.kzjCbV.dqpYKm.RVUSp.fzpbtJ.bYPzoC", el => el.innerText);
+              console.log(`🔹 [账号 ${accountIndex}] ${getCurrentTime()} - 🎯 当前点击后的积分 (${i}/5): ${currentPoints}`);
+            } catch (error) {
+              console.log(`🔹 [账号 ${accountIndex}] ${getCurrentTime()} - ⚠️ 未找到积分结果元素`);
+            }
           } else {
-            console.log(`${getCurrentTime()} - ⚠️ 未找到'Press'按钮`);
+            console.log(`🔹 [账号 ${accountIndex}] ${getCurrentTime()} - ⚠️ 未找到'Press'按钮`);
             break;
           }
-
           await delay(10000);
         }
 
-        const bankClicked = await page.$$eval("button:nth-child(3) > div > p", buttons => {
-          const target = buttons.find(btn => btn.innerText && btn.innerText.includes("Bank"));
-          if (target) {
-            target.click();
-            return true;
-          }
-          return false;
-        });
+        console.log(`🔹 [账号 ${accountIndex}] ${getCurrentTime()} - ⏳ 等待点击Bank按钮...`);
+        await delay(10000);
 
-        if (bankClicked) {
-          console.log(`${getCurrentTime()} - 🏦 点击存储按钮`);
-          await delay(3000);
+        try {
+          await page.waitForSelector("button:nth-child(3) > div > p", { timeout: 10000 });
+          await page.click("button:nth-child(3) > div > p");
+          console.log(`🔹 [账号 ${accountIndex}] ${getCurrentTime()} - 🏦 点击存储按钮`);
+          await delay(10000);
 
           const diceRollResult = await page.$eval("h2.gRUWXt.dnQMzm.ljNVlj.kzjCbV.dqpYKm.RVUSp.fzpbtJ.bYPzoC", el => el.innerText).catch(() => "未知");
-          console.log(`${getCurrentTime()} - 🎲 骰子结果: ${diceRollResult} 积分`);
+          console.log(`🔹 [账号 ${accountIndex}] ${getCurrentTime()} - 🎲 骰子结果: ${diceRollResult} 积分`);
 
+          await page.waitForSelector("#creditBalance", { timeout: 10000 });
           userCredits = await page.$eval("#creditBalance", el => el.innerText).catch(() => "未知");
-          console.log(`${getCurrentTime()} - 💳 抽奖后最终余额: ${userCredits}`);
-        } else {
-          console.log(`${getCurrentTime()} - ⚠️ 未找到'Bank'按钮`);
+          console.log(`🔹 [账号 ${accountIndex}] ${getCurrentTime()} - 💳 抽奖后最终余额: ${userCredits}`);
+          console.log(`🔹 [账号 ${accountIndex}] ${getCurrentTime()} - 🎉 每日抽奖完成！`);
+
+        } catch (error) {
+          console.log(`🔹 [账号 ${accountIndex}] ${getCurrentTime()} - ⚠️ 未找到'Bank'按钮`);
         }
       } else {
-        console.log(`${getCurrentTime()} - ⚠️ 未找到'Throw Dice'按钮`);
+        console.log(`🔹 [账号 ${accountIndex}] ${getCurrentTime()} - ⚠️ 未找到'Throw Dice'按钮`);
       }
     } else {
-      console.log(`${getCurrentTime()} - ⚠️ 当前无法抽奖，请稍后再试！`);
+      console.log(`🔹 [账号 ${accountIndex}] ${getCurrentTime()} - ⚠️ 当前无法抽奖，请稍后再试！`);
     }
     await browser.close();
   } catch (error) {
-    console.error(`${getCurrentTime()} - ❌ 发生错误:`, error);
+    console.error(`🔹 [账号 ${accountIndex}] ${getCurrentTime()} - ❌ 发生错误:`, error);
   }
 }
 
@@ -234,6 +241,10 @@ async function runAccount(cookie) {
  */
 async function startBot() {
   try {
+    console.clear();
+    displayHeader();
+    console.log(`🔹 [启动] ${getCurrentTime()} - 🚀 启动 MagicNewton 机器人...`);
+    
     const data = fs.readFileSync("data.txt", "utf8").split("\n").filter(Boolean);
     
     if (!data.length) {
@@ -244,7 +255,7 @@ async function startBot() {
 
     while (true) {
       try {
-        console.log(`${getCurrentTime()} - 🔄 开始运行账号...`);
+        console.log(`🔹 [启动] ${getCurrentTime()} - 🔄 开始运行账号...`);
         for (let i = 0; i < data.length; i++) {
           const cookie = {
             name: "__Secure-next-auth.session-token",
@@ -254,14 +265,14 @@ async function startBot() {
             secure: true,
             httpOnly: true,
           };
-          await runAccount(cookie);
+          await runAccount(cookie, i + 1);
         }
       } catch (error) {
-        console.error(`${getCurrentTime()} - ❌ 发生错误:`, error);
+        console.error(`🔹 [错误] ${getCurrentTime()} - ❌ 发生错误:`, error);
       }
       
       const extraDelay = RANDOM_EXTRA_DELAY();
-      console.log(`${getCurrentTime()} - 🔄 每日抽奖完成。机器人将在24小时后再次运行，额外随机延迟 ${extraDelay / 60000} 分钟...`);
+      console.log(`🔹 [完成] ${getCurrentTime()} - 🔄 每日抽奖完成。机器人将在24小时后再次运行，额外随机延迟 ${extraDelay / 60000} 分钟...`);
       await delay(DEFAULT_SLEEP_TIME + extraDelay);
     }
   } catch (error) {
